@@ -68,7 +68,7 @@ case "${DEVICE}" in
   RK3326*)
     [ "${ENABLE_32BIT}" == "true" ] && EMUS_32BIT="desmume-lr gpsp-lr pcsx_rearmed-lr"
     PKG_DEPENDS_TARGET+=" common-shaders glsl-shaders"
-    PKG_EMUS+=" amiberry drastic-sa mupen64plus-sa scummvmsa yabasanshiro-sa portmaster mednafen"
+    PKG_EMUS+=" amiberry drastic-sa mupen64plus-sa scummvmsa yabasanshiro-sa portmaster mednafen mgba-sa"
     LIBRETRO_CORES+=" uae4arm flycast-lr flycast2021-lr"
     PKG_RETROARCH+=" retropie-shaders"
   ;;
