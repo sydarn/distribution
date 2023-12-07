@@ -2,7 +2,7 @@
 # Copyright (C) 2023-present - The JELOS Project (https://github.com/JustEnoughLinuxOS)
 
 PKG_NAME="mgba-sa"
-PKG_VERSION="63b18687f073deeac7c1aeabb386ffd4d1a89175"
+PKG_VERSION="dc9a2572d129917442dd023460436d1b09c8eeb5"
 PKG_LICENSE="Mozilla Public License Version 2.0"
 PKG_SITE="https://mgba.io/"
 PKG_URL="https://github.com/mgba-emu/mgba.git"
@@ -12,12 +12,6 @@ GET_HANDLER_SUPPORT="git"
 PKG_GIT_CLONE_BRANCH="master"
 PKG_GIT_CLONE_SINGLE="yes"
 PKG_TOOLCHAIN="cmake"
-
-pre_configure_target() {
-  PKG_CMAKE_OPTS_HOST="-DBUILD_SDL=OFF \
-                       -DUSE_GDB_STUB=OFF \
-                       -DUSE_DISCORD_RPC=OFF "
-}
 
 makeinstall_target() {
   mkdir -p ${INSTALL}/usr/bin
