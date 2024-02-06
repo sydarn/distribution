@@ -2,7 +2,7 @@
 # Copyright (C) 2023-present - The JELOS Project (https://github.com/JustEnoughLinuxOS)
 
 PKG_NAME="mgba-sa"
-PKG_VERSION="dc9a2572d129917442dd023460436d1b09c8eeb5"
+PKG_VERSION="bba2c131a172d6a209e9a96b827e670723deb0af"
 PKG_LICENSE="Mozilla Public License Version 2.0"
 PKG_SITE="https://mgba.io/"
 PKG_URL="https://github.com/mgba-emu/mgba.git"
@@ -13,6 +13,11 @@ PKG_GIT_CLONE_BRANCH="master"
 PKG_GIT_CLONE_SINGLE="yes"
 PKG_TOOLCHAIN="cmake"
 
+pre_configure_target() {
+PKG_CMAKE_OPTS_TARGET+="-DCMAKE_BUILD_TYPE=Release \
+					   -DBUILD_LTO=ON"
+}
+
 makeinstall_target() {
   mkdir -p ${INSTALL}/usr/bin
   mkdir -p ${INSTALL}/usr/lib
@@ -21,7 +26,7 @@ makeinstall_target() {
   cp -rf ${PKG_DIR}/scripts/* ${INSTALL}/usr/bin
 
   chmod +x ${INSTALL}/usr/bin/start_mgba.sh
-  chmod +x ${INSTALL}/usr/bin/mgba_gen_config.sh
+  chmod +x ${INSTALL}/usr/bin/mgba_gen_controller.sh
 
   mkdir -p ${INSTALL}/usr/config/${PKG_NAME}
   cp ${PKG_DIR}/config/common/* ${INSTALL}/usr/config/${PKG_NAME}
