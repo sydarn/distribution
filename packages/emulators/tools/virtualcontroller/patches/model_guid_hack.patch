@@ -1,0 +1,132 @@
+diff --git a/Makefile b/Makefile
+index 8674929..d775d4f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,16 +1,20 @@
+ .SILENT: all install clean
+-C=gcc
+-CFLAGS=-Os -std=gnu11 -Wall -Wextra -Wformat-security -Werror
++CC?=gcc
++CXX?=g++
++AR?=ar
++CFLAGS=-Os -Wall -Wextra -Wformat-security -Werror
+ SECURITY_FLAGS=-Wstack-protector -Wstack-protector --param ssp-buffer-size=4 \
+ 	       --param ssp-buffer-size=4 -fstack-protector-strong \
+ 	       -fstack-clash-protection -pie -fPIE -D_FORTIFY_SOURCE=2
+ 
+-all: virtual_controller.c
+-	$(C) $(CFLAGS) $(SECURITY_FLAGS) virtual_controller.c -o virtual_controller
++all: virtual_controller.c model_map.cpp model_map.h
++	$(CXX) -c -std=c++11 $(CFLAGS) $(SECURITY_FLAGS) model_map.cpp -o model_map.o
++	$(AR) -rcs libmodel_map.a model_map.o
++	$(CC) -std=gnu11 $(CFLAGS) $(SECURITY_FLAGS) virtual_controller.c -L. -lmodel_map -lstdc++ -o virtual_controller
+ 
+ install:
+ 	strip --strip-unneeded virtual_controller
+ 	cp virtual_controller /sbin/virtual_controller
+ 
+ clean:
+-	rm -f virtual_controller
++	rm -f virtual_controller model_map.o libmodel_map.a
+diff --git a/model_map.cpp b/model_map.cpp
+new file mode 100644
+index 0000000..8fef075
+--- /dev/null
++++ b/model_map.cpp
+@@ -0,0 +1,52 @@
++#include <fstream>
++#include <iostream>
++#include <string>
++#include <map>
++#include <tuple>
++
++#include "model_map.h"
++
++using namespace std;
++const map<string, tuple<uint16_t, uint16_t> > model = {
++    {"Anbernic RG503", {0xAAAA, 0x1111} },
++    {"Anbernic RG353P", {0xAAAA, 0x1111} },
++    {"Anbernic RG353M", {0xAAAA, 0x1111} },
++    {"Anbernic RG353V", {0xAAAA, 0x1111} },
++    {"Anbernic RG353VS", {0xAAAA, 0x1111} },
++    {"Powkiddy RK2023", {0xBBBB, 0x2222} },
++    {"Powkiddy RGB30", {0xBBBB, 0x2222} },
++    {"Powkiddy x55", {0xBBBB, 0x2222} },
++    {"Powkiddy RGB10 Max 3", {0xBBBB, 0x2222} },
++};
++
++string get_model() {
++    string filename = "/sys/firmware/devicetree/base/model";
++    ifstream inputFile(filename);
++
++    string line;
++    if (!getline(inputFile, line)) {
++        exit(1);
++    }
++    // remove last charachter to match correctly
++    line.pop_back();
++    try {
++        model.at(line);
++    } catch (const out_of_range &) {
++        cerr << "No match for model: " << get_model() << endl;
++        exit(1);
++    } 
++    cout << "Found model name: " << line << endl;
++    return line;
++}
++
++uint16_t get_vendor() {
++    uint16_t vid = get<0>(model.at(get_model()));
++    cout << "Vendor ID: " << vid << endl;
++    return vid;
++}
++
++uint16_t get_product() {
++    uint16_t pid = get<1>(model.at(get_model()));
++    cout << "Product ID: " << pid << endl;
++    return pid;
++}
+diff --git a/model_map.h b/model_map.h
+new file mode 100644
+index 0000000..fb7840c
+--- /dev/null
++++ b/model_map.h
+@@ -0,0 +1,14 @@
++#ifndef __MODEL_MAP_H_
++#define __MODEL_MAP_H_
++#include <stdint.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++    uint16_t get_vendor();
++    uint16_t get_product();
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/virtual_controller.c b/virtual_controller.c
+index 205e598..7dd4a9c 100644
+--- a/virtual_controller.c
++++ b/virtual_controller.c
+@@ -16,6 +16,8 @@
+ #include <sys/epoll.h>
+ #include <sys/ioctl.h>
+ 
++#include "model_map.h"
++
+ #define DEVICE_NAME		"Virtual Gamepad"
+ #define DEVICE_VID		0x1234
+ #define DEVICE_PID		0x5678
+@@ -306,8 +308,8 @@ int create_uinput_device(struct virtual_device *v_dev)
+ 	}
+ 
+ 	v_dev->usetup.id.bustype = BUS_HOST;
+-	v_dev->usetup.id.vendor = DEVICE_VID;
+-	v_dev->usetup.id.product = DEVICE_PID;
++	v_dev->usetup.id.vendor = get_vendor();
++	v_dev->usetup.id.product = get_product();
+ 	sprintf(v_dev->usetup.name, DEVICE_NAME);
+ 
+ 	ret = ioctl(v_dev->uinput_fd, UI_DEV_SETUP, &v_dev->usetup);
